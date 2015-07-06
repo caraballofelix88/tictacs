@@ -1,6 +1,8 @@
 package tictacs;
 
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.awt.Point;
 import java.util.Scanner;
 import tictacs.State;
 
@@ -10,10 +12,12 @@ public class Game {
   private static AtomicLong GAME_ID = new AtomicLong();
   private final long gameId = Game.generateID();
   private State gameState;
+  private int dimension;
   private String[] players;
 
   public Game() {
-    gameState = new State();
+    dimension = 1;
+    gameState = new State(dimension);
     players = new String[2];
     players[0] = "Xavier";
     players[1] = "Oliver";
@@ -29,9 +33,13 @@ public class Game {
     int moveY = 0;
     int moveX = 0;
 
+    ArrayList<Point> coords = new ArrayList<Point>();
     while(!gameState.isComplete()) {
-      if(gameState.isFree()) {
-        System.out.println("enter a number 1-9 to select grid.");
+        coords.clear();
+        while(coords.size() < dimension) {
+
+
+        System.out.println("enter a number 1-9 to select coord, " + (dimension - coords.size()) + " remaining");
         in = scan.nextLine();
         try {
           gridVal = Integer.parseInt(in);
@@ -48,33 +56,12 @@ public class Game {
 
         gridY = gridVal/3;
         gridX = gridVal%3;
+
+        coords.add(new Point(gridX,gridY));
       }
 
 
-
-      System.out.println("enter a number 1-9 to select move.");
-      in = scan.nextLine();
-      try {
-        moveVal = Integer.parseInt(in);
-      } catch(NumberFormatException e) {
-        System.out.println("Invalid input");
-        continue;
-      }
-
-      moveVal--;
-      if(moveVal < 0 || moveVal > 8) {
-        System.out.println("Invalid number.");
-        continue;
-      }
-
-      moveY = moveVal/3;
-      moveX = moveVal%3;
-
-      if(gameState.isFree()) {
-        gameState.makeMove(gridX, gridY, moveX, moveY);
-      } else {
-        gameState.makeMove(moveX, moveY);
-      }
+      gameState.makeMove(coords);
       System.out.println(gameState);
     }
 

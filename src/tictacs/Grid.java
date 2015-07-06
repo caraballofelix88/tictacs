@@ -1,62 +1,68 @@
+
 package tictacs;
 
-public class Grid {
-  private String[][] spaces;
-  private String winner;
-  private boolean complete;
-  private String[] symbols;
-  private enum Check {Row, Column, Diagonal, ReverseDiagonal};
 
+import java.util.ArrayList;
+import java.awt.Point;
 
-  public Grid() {
-    spaces = new String[3][3];
-    for(int y=0; y < 3;y++) {
-      for(int x=0; x < 3;x++) {
-        spaces[y][x] = new String(" ");
+public class Grid extends Checkable {
+  private Checkable[][] spaces;
+  private int dimension;
+  private int currentGridX;
+  private int currentGridY;
+  private boolean freeGridMove;
+
+  public Grid(int dim) {
+    super();
+
+    spaces = new Checkable[3][3];
+
+    if(dim > 1) {
+      for(int y=0; y < 3; y++) {
+        for(int x=0; x < 3; x++) {
+          spaces[y][x] = new Grid(dim-1);
+        }
+      }
+    } else {
+      for(int y=0; y < 3; y++) {
+        for(int x=0; x < 3; x++) {
+          spaces[y][x] = new Space();
+        }
       }
     }
 
-    winner = " ";
+    dimension = dim;
     complete = false;
+    freeGridMove = true;
+    value = Symbol.Empty;
   }
 
-  public boolean isValid(int x, int y) {
-    if(spaces[y][x].equals(" ")) {
-      return true;
-    }
-    return false;
-  }
-
-//TODO: implement game condition check functions in a seperate abstract class?
-//      add to interface?
-  public String getIthSpace(int i, int var, Check check) {
+  public Symbol getIthSpace(int i, int var, Check check) {
     switch(check) {
       case Row:
-        return spaces[i][var];
+        return spaces[i][var].getValue();
       case Column:
-        return spaces[var][i];
+        return spaces[var][i].getValue();
       case Diagonal:
-        return spaces[var][var];
+        return spaces[var][var].getValue();
       case ReverseDiagonal:
-        return spaces[var][2-var];
+        return spaces[var][2-var].getValue();
       default:
-        return " ";
+        return Symbol.Empty;
     }
   }
 
-  private String inARow(int i, Check check) {
-    String out = getIthSpace(i, 0, check);
+  private Symbol inARow(int i, Check check) {
+    Symbol out = getIthSpace(i, 0, check);
     for(int x = 1; x < 3; x++) {
       if(!getIthSpace(i, x, check).equals(out)) {
-        out = " ";
+        out = Symbol.Empty;
       }
     }
-
     return out;
   }
 
-
-  public boolean isWon(String move) {
+  public boolean isWon(Symbol move) {
     for(int i = 0; i < 3; i++) {
       if(inARow(i, Check.Row).equals(move)) { return true; }
       if(inARow(i, Check.Column).equals(move)) { return true; }
@@ -78,43 +84,78 @@ public class Grid {
     return true;
   }
 
-  public boolean isComplete() {
-    return complete;
-  }
-
-  public String getWinner() {
-    return winner;
-  }
-
-  public boolean makeMove(int x, int y, String move) {
-    if(isValid(x,y)) {
-      spaces[y][x] = move;
-
-      if(isWon(move)) {
-        complete = true;
-        winner = move;
-      }
-
-      if(isFull()) {
-        complete = true;
-        winner = "*";
-      }
-
+  public boolean isValid(int x, int y) {
+    if(spaces[y][x].isValid()) {
       return true;
     }
-    System.out.println("Space is already filled!");
     return false;
   }
 
-  public String getSpace(int x, int y) {
-    return spaces[y][x];
+
+  //coordinates composed of series of (x,y) points, each index corresponding to grid depth
+  //TODO: replace ArrayList with just an array
+  //Actually this coordinate list approach may not even be necessary
+  public boolean makeMove(ArrayList<Point> coordinates, Symbol move) {
+    //////////////////////////////////
+    int x = coordinates.get(0).x;
+    int y = coordinates.get(0).y;
+    int nextX;
+    int nextY;
+    if(freeGridMove) {
+
+      if(isValid(x,y)) {
+
+      } else {
+        System.out.println("that spot is full!");
+        return false;
+      }
+    } else {
+      if(currentGridX == x && currentGridY == y) {
+
+      } else {
+        System.out.println("Invalid grid choice.");
+        return false;
+      }
+    }
+
+
+    coordinates.remove(0);
+    if(!coordinates.isEmpty()) {
+      nextX = coordinates.get(0).x;
+      nextY = coordinates.get(0).y;
+      if(isValid(nextX,nextY)) {
+        currentGridX = nextX;
+        currentGridY = nextY;
+        freeGridMove = false;
+      } else {
+        freeGridMove = true;
+      }
+    }
+
+
+    if(spaces[y][x].makeMove(coordinates, move)) {
+      if(isWon(move)) {
+        complete = true;
+        value = move;
+      } else if(isFull()) {
+        complete = true;
+        value = Symbol.Tied;
+      } else {
+        value = Symbol.Incomplete;
+      }
+      return true;
+    } else {
+      return false;
+    }
+    /////////////////////////////
   }
 
-  public String toString() {
-    String out = new String();
-    for(int y = 0; y < 3;y++) {
-      out+= spaces[y][0] + "|" + spaces[y][1] + "|" + spaces[y][2] + "\n";
-    }
-    return out;
+
+
+
+
+  public boolean isFree() {
+    return freeGridMove;
   }
+
 }
